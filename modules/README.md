@@ -1,0 +1,1 @@
+- This vocoder is took from AudioLDM: https://github.com/haoheliu/AudioLDM

@@ -1,0 +1,118 @@
+import yaml
+import random
+import argparse
+import os
+import torch
+import librosa
+from tqdm import tqdm
+from diffusers import DDIMScheduler
+from transformers import Wav2Vec2FeatureExtractor, WavLMForXVector
+
+# from model.dit import DiT
+from model.udit import UDiT
+from utils import save_audio
+import shutil
+from vae_modules.autoencoder_wrapper import Autoencoder
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--device', type=str, default='cuda')
+parser.add_argument('--output_dir', type=str, default='./output/')
+parser.add_argument('--mixture', type=str, default='/export/corpora7/HW/LibriMix/Libri2Mix/wav16k/min/test/mix_both/4077-13754-0001_5142-33396-0065.wav')
+parser.add_argument('--reference', type=str, default='/export/corpora7/HW/LibriMix/Libri2Mix/wav16k/min/test/s1/4077-13754-0001_5142-33396-0065.wav')
+parser.add_argument('--enrollment', type=str, default='/export/corpora7/HW/LibriMix/Libri2Mix/wav16k/min/test/s1/4077-13754-0004_5142-36377-0020.wav')
+
+# pre-trained model path
+parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
+parser.add_argument('--segment', type=int, default=3)
+parser.add_argument('--vae_sr', type=int, default=50)
+
+parser.add_argument("--num_infer_steps", type=int, default=50)
+# model configs
+parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_conv_v_b_1000.yaml')
+parser.add_argument('--diffusion-ckpt', type=str, default='/export/corpora7/HW/DPMTSE-main/src/udit_conv_v_b_1000_ckpt/424.pt')
+
+# log and random seed
+parser.add_argument('--random-seed', type=int, default=2024)
+args = parser.parse_args()
+
+with open(args.diffusion_config, 'r') as fp:
+    args.diff_config = yaml.safe_load(fp)
+
+args.v_prediction = args.diff_config["ddim"]["v_prediction"]
+
+@torch.no_grad()
+def sample_diffusion(args, unet, autoencoder, scheduler,
+                     mixture, timbre, device, ddim_steps=50, eta=1, seed=2023):
+    unet.eval()
+    scheduler.set_timesteps(ddim_steps)
+    generator = torch.Generator(device=device).manual_seed(seed)
+    # init noise
+    noise = torch.randn(mixture.shape, generator=generator, device=device)
+    pred = noise
+
+    for t in tqdm(scheduler.timesteps):
+        pred = scheduler.scale_model_input(pred, t)
+        model_output = unet(x=pred, timesteps=t, mixture=mixture, timbre=timbre)
+        pred = scheduler.step(model_output=model_output, timestep=t, sample=pred,
+                              eta=eta, generator=generator).prev_sample
+
+    pred = autoencoder(embedding=pred).squeeze(1)
+
+    return pred
+
+
+
+if __name__ == '__main__':
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    autoencoder = Autoencoder(args.autoencoder_path, 'stable_vae', quantization_first=True)
+    autoencoder.eval()
+    autoencoder.to(args.device)
+
+    unet = UDiT(
+        **args.diff_config['diffwrap']['UDiT']
+    ).to(args.device)
+    unet.load_state_dict(torch.load(args.diffusion_ckpt)['model'])
+
+    total = sum([param.nelement() for param in unet.parameters()])
+    print("Number of parameter: %.2fM" % (total / 1e6))
+    
+    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained('microsoft/wavlm-base-sv')
+    model = WavLMForXVector.from_pretrained('microsoft/wavlm-base-sv').to(args.device)
+    
+
+    if args.v_prediction:
+        print('v prediction')
+        noise_scheduler = DDIMScheduler(**args.diff_config["ddim"]['diffusers'])
+    else:
+        print('noise prediction')
+        noise_scheduler = DDIMScheduler(**args.diff_config["ddim"]['diffusers'])
+    
+    # these steps reset dtype of noise_scheduler params
+    latents = torch.randn((1, 128, 128),
+                          device=args.device)
+    noise = torch.randn(latents.shape).to(latents.device)
+    timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps,
+                              (noise.shape[0],),
+                              device=latents.device).long()
+    _ = noise_scheduler.add_noise(latents, noise, timesteps)
+        
+    with torch.no_grad():
+        mixture, _ = librosa.load(args.mixture, sr=24000)
+        mixture = torch.tensor(mixture).unsqueeze(0).to(args.device)
+        mixture = autoencoder(audio=mixture.unsqueeze(1))
+
+        enroll, _ = librosa.load(args.enrollment, sr=16000)
+        inputs = feature_extractor(torch.tensor(enroll), sampling_rate=16000, return_tensors="pt").to(args.device)
+        timbre = model(**inputs).embeddings
+
+    
+    pred = sample_diffusion(args, unet, autoencoder, noise_scheduler, mixture, timbre, args.device, ddim_steps=args.num_infer_steps, eta=0, seed=args.random_seed)
+    
+    savename = args.mixture.split('/')[-1].split('.wav')[0]
+    shutil.copyfile(args.mixture, f'{args.output_dir}/{savename}_mix.wav')
+    shutil.copyfile(args.enrollment, f'{args.output_dir}/{savename}_enrollment.wav')
+    shutil.copyfile(args.reference, f'{args.output_dir}/{savename}_ref.wav')
+    save_audio(f'{args.output_dir}/{savename}_pred.wav', 24000, pred)
+
+    print(f'the prediction is save to {savename}_pred.wav')
