@@ -403,6 +403,7 @@ class UDiT(nn.Module):
         x = self.input_proj(torch.cat((x, mixture), dim=-1))
         x = self.pos_embed(x)
         if not torch.is_tensor(timesteps):
+            # timesteps = torch.tensor([timesteps], dtype=torch.long, device=x.device)
             # flow matching use continuous t, we dont need int timesteps for diffusion
             timesteps = torch.tensor([timesteps], device=x.device)
         elif torch.is_tensor(timesteps) and len(timesteps.shape) == 0:
