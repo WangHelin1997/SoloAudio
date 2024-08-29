@@ -1,0 +1,21 @@
+version: 1.0
+
+system: "udit_rotary_v_b_1000"
+
+ddim:
+  v_prediction: true
+  diffusers:
+    num_train_timesteps: 1000
+    shift: 1.0
+    # might use shift: 3.0 in the future
+
+diffwrap:
+  UDiT:  
+    input_dim: 256
+    output_dim: 128
+    pos_method: 'none'
+    pos_length: 500
+    timbre_dim: 512
+    hidden_size: 768
+    depth: 12
+    num_heads: 12
