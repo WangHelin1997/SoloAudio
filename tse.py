@@ -6,20 +6,19 @@ import torch
 import librosa
 from tqdm import tqdm
 from diffusers import DDIMScheduler
-from transformers import Wav2Vec2FeatureExtractor, WavLMForXVector
-
-# from model.dit import DiT
+from transformers import AutoProcessor, ClapModel, ClapProcessor
 from model.udit import UDiT
 from utils import save_audio
 import shutil
 from vae_modules.autoencoder_wrapper import Autoencoder
+import torchaudio
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
 parser.add_argument('--output_dir', type=str, default='./output/')
-parser.add_argument('--mixture', type=str, default='/export/corpora7/HW/LibriMix/Libri2Mix/wav16k/min/test/mix_both/4077-13754-0001_5142-33396-0065.wav')
-parser.add_argument('--reference', type=str, default='/export/corpora7/HW/LibriMix/Libri2Mix/wav16k/min/test/s1/4077-13754-0001_5142-33396-0065.wav')
-parser.add_argument('--enrollment', type=str, default='/export/corpora7/HW/LibriMix/Libri2Mix/wav16k/min/test/s1/4077-13754-0004_5142-36377-0020.wav')
+parser.add_argument('--mixture', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/mix_dir/1.wav')
+parser.add_argument('--reference', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/s1/1.wav')
+parser.add_argument('--enrollment', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/ref/1.wav')
 
 # pre-trained model path
 parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
@@ -28,8 +27,8 @@ parser.add_argument('--vae_sr', type=int, default=50)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
-parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_conv_v_b_1000.yaml')
-parser.add_argument('--diffusion-ckpt', type=str, default='/export/corpora7/HW/DPMTSE-main/src/udit_conv_v_b_1000_ckpt/424.pt')
+parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
+parser.add_argument('--diffusion-ckpt', type=str, default='/export/corpora7/HW/SoloAudio/udit_rotary_v_b_1000_ckpt/84.pt')
 
 # log and random seed
 parser.add_argument('--random-seed', type=int, default=2024)
@@ -42,7 +41,7 @@ args.v_prediction = args.diff_config["ddim"]["v_prediction"]
 
 @torch.no_grad()
 def sample_diffusion(args, unet, autoencoder, scheduler,
-                     mixture, timbre, device, ddim_steps=50, eta=1, seed=2023):
+                     mixture, timbre, device, ddim_steps=50, eta=0, seed=2023):
     unet.eval()
     scheduler.set_timesteps(ddim_steps)
     generator = torch.Generator(device=device).manual_seed(seed)
@@ -65,6 +64,9 @@ def sample_diffusion(args, unet, autoencoder, scheduler,
 if __name__ == '__main__':
 
     os.makedirs(args.output_dir, exist_ok=True)
+    clapmodel = ClapModel.from_pretrained("laion/larger_clap_general").to(args.device)
+    processor = AutoProcessor.from_pretrained('laion/larger_clap_general')
+    
     autoencoder = Autoencoder(args.autoencoder_path, 'stable_vae', quantization_first=True)
     autoencoder.eval()
     autoencoder.to(args.device)
@@ -76,9 +78,6 @@ if __name__ == '__main__':
 
     total = sum([param.nelement() for param in unet.parameters()])
     print("Number of parameter: %.2fM" % (total / 1e6))
-    
-    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained('microsoft/wavlm-base-sv')
-    model = WavLMForXVector.from_pretrained('microsoft/wavlm-base-sv').to(args.device)
     
 
     if args.v_prediction:
@@ -101,10 +100,33 @@ if __name__ == '__main__':
         mixture, _ = librosa.load(args.mixture, sr=24000)
         mixture = torch.tensor(mixture).unsqueeze(0).to(args.device)
         mixture = autoencoder(audio=mixture.unsqueeze(1))
-
-        enroll, _ = librosa.load(args.enrollment, sr=16000)
-        inputs = feature_extractor(torch.tensor(enroll), sampling_rate=16000, return_tensors="pt").to(args.device)
-        timbre = model(**inputs).embeddings
+        
+        audio_sample, sample_rate = torchaudio.load(args.enrollment)
+        if audio_sample.shape[0] > 1:
+            audio_sample = torch.mean(audio_sample, dim=0, keepdim=True)
+        if sample_rate != 48000:
+            audio_sample = audio_sample
+            resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=48000)
+            audio_sample = resampler(audio_sample)
+        num_samples = audio_sample.shape[1]
+        target_num_samples = 48000*10
+        if num_samples > target_num_samples:
+            audio_sample = audio_sample[:, :target_num_samples]
+        elif num_samples < target_num_samples:
+            padding = target_num_samples - num_samples
+            audio_sample = torch.nn.functional.pad(audio_sample, (0, padding))
+            
+        audio_inputs = processor(
+            audios=[audio_sample.squeeze().numpy()],
+            sampling_rate=48000,
+            return_tensors="pt",
+            padding=True  # Pad audio to the required length, if necessary
+        )
+        inputs = {
+            "input_features": audio_inputs["input_features"][0].unsqueeze(0)  # Audio features
+        }
+        inputs = {key: value.to(args.device) for key, value in inputs.items()}
+        timbre = clapmodel.get_audio_features(**inputs)
 
     
     pred = sample_diffusion(args, unet, autoencoder, noise_scheduler, mixture, timbre, args.device, ddim_steps=args.num_infer_steps, eta=0, seed=args.random_seed)
