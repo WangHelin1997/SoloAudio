@@ -1,6 +1,6 @@
 version: 1.0
 
-system: "udit_rotary_v_b_1000"
+system: "udit_rotary_v_b_rfm"
 
 ddim:
   v_prediction: true
