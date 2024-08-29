@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader, ConcatDataset
 # from torch.cuda.amp import autocast, GradScaler
 
 from accelerate import Accelerator
-from diffusers import FlowMatchEulerDiscreteScheduler
+# trailing timestep support during inference
+from solvers import FlowMatchEulerDiscreteScheduler
 from diffusers.training_utils import (
     compute_density_for_timestep_sampling,
     compute_loss_weighting_for_sd3,
