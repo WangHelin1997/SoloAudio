@@ -11,10 +11,10 @@ def eval_ddim(unet, autoencoder, scheduler, eval_loader, args, device, epoch=0, 
     # noise generator for eval
 
     generator = torch.Generator(device=device).manual_seed(args.random_seed)
-    scheduler.set_timesteps(ddim_steps)
     unet.eval()
 
     for step, (mixture, target, timbre, mix_id, mixture_path, source_path, enroll_path) in enumerate(tqdm(eval_loader)):
+        scheduler.set_timesteps(ddim_steps)
         mixture = mixture.to(device)
         target = target.to(device)
         timbre = timbre.to(device)

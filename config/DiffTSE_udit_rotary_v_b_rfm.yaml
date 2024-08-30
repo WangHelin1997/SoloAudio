@@ -6,8 +6,10 @@ ddim:
   v_prediction: true
   diffusers:
     num_train_timesteps: 1000
-    shift: 1.0
     # might use shift: 3.0 in the future
+    shift: 3.0
+    # trailing is used in zero-snr (DPM-TSE)
+    timestep_spacing: 'trailing'
 
 diffwrap:
   UDiT:  
