@@ -7,7 +7,7 @@ ddim:
   diffusers:
     num_train_timesteps: 1000
     # might use shift: 3.0 in the future
-    shift: 1.0
+    shift: 3.0
     # trailing is used in zero-snr (DPM-TSE)
     timestep_spacing: 'trailing'
 

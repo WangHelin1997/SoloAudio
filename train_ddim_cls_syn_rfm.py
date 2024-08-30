@@ -44,6 +44,7 @@ parser.add_argument('--sample_rate', type=int, default=24000)
 parser.add_argument('--debug', type=bool, default=False)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
+parser.add_argument("--logit-normal", type=bool, default=True)
 
 # training settings
 parser.add_argument("--amp", type=str, default='fp16')
@@ -201,16 +202,17 @@ if __name__ == '__main__':
             bsz = target.shape[0]
 
             # todo: sd3 said lognorm sampling is better than uniform
-            # u = compute_density_for_timestep_sampling(
-            #         weighting_scheme='logit_normal',
-            #         batch_size=bsz,
-            #         logit_mean=0.0,
-            #         logit_std=1.0,
-            #         mode_scale=None,
-            #     )
-            # indices = (u * noise_scheduler.config.num_train_timesteps).long()
-
-            indices = torch.randint(0, noise_scheduler.config.num_train_timesteps, (bsz,))
+            if args.logit_normal:
+                u = compute_density_for_timestep_sampling(
+                        weighting_scheme='logit_normal',
+                        batch_size=bsz,
+                        logit_mean=0.0,
+                        logit_std=1.0,
+                        mode_scale=None,
+                    )
+                indices = (u * noise_scheduler.config.num_train_timesteps).long()
+            else:
+                indices = torch.randint(0, noise_scheduler.config.num_train_timesteps, (bsz,))
             timesteps = noise_scheduler.timesteps[indices].to(device=target.device)
 
             # Add noise according to flow matching.
