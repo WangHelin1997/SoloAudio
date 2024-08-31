@@ -11,7 +11,7 @@ import librosa
 import glob
 
 class TSEDataset(Dataset):
-    def __init__(self, base_dir, vae_dir, timbre_dir, tag=None, debug=False
+    def __init__(self, base_dir, vae_dir, timbre_dir, tag=None, debug=False, training=False, cfg_ratio=0.1, uncond_path=None
         ):
 
         self.debug = debug
@@ -20,6 +20,9 @@ class TSEDataset(Dataset):
         self.vae_dir = vae_dir
         self.tag = tag
         self.files = glob.glob(os.path.join(vae_dir, "mix_dir", "*.pt"))
+        self.training = training
+        self.cfg_ratio = cfg_ratio
+        self.uncond_path = uncond_path
         
     def __len__(self):
         return len(self.files) if not self.debug else len(self.files) // 100
@@ -33,10 +36,13 @@ class TSEDataset(Dataset):
         mixture = torch.load(os.path.join(self.vae_dir, "mix_dir", file_id+'.pt'))
         source_path = os.path.join(self.base_dir, "s1", file_id+'.wav')
         source = torch.load(os.path.join(self.vae_dir, "s1", file_id+'.pt'))
+        enroll_path = os.path.join(self.base_dir, "ref", file_id+'.wav')
         
         # read enrollment
-        enroll_path = os.path.join(self.base_dir, "ref", file_id+'.wav')
-        enroll = torch.tensor(np.load(os.path.join(self.timbre_dir, "s1", file_id+"_"+self.tag+".npz"))['arr_0'])
+        if self.training and random.random()<self.cfg_ratio:
+            enroll = torch.tensor(np.load(self.uncond_path)['arr_0'])
+        else:
+            enroll = torch.tensor(np.load(os.path.join(self.timbre_dir, "s1", file_id+"_"+self.tag+".npz"))['arr_0'])
         
         return mixture, source, enroll, file_id, mixture_path, source_path, enroll_path
 
