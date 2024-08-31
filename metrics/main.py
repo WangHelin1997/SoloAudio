@@ -3,6 +3,46 @@ import numpy as np
 import pandas as pd
 from extractor_wrapper import FeatureExtractor
 from metric_funcs import calculate_frechet_distance, calculate_kld, calculate_clap_score, calculate_isc
+import argparse
+import glob
+import sys
+sys.path.append('/export/corpora7/HW/visqol/visqol_lib_py')
+import visqol_lib_py
+import visqol_config_pb2
+import similarity_result_pb2
+from tqdm import tqdm
+
+import torch
+import torchaudio
+from torchaudio.transforms import Resample # Resampling
+import numpy as np
+import tempfile
+import soundfile as sf
+
+VISQOLMANAGER = visqol_lib_py.VisqolManager()
+VISQOLMANAGER.Init(visqol_lib_py.FilePath( \
+    '/export/corpora7/HW/visqol/model/lattice_tcditugenmeetpackhref_ls2_nl60_lr12_bs2048_learn.005_ep2400_train1_7_raw.tflite'), \
+    True, False, 60, True)
+
+
+def visqol_speech_24k(ests, refs, sr=16000):
+    if sr != 16000:
+        resample = Resample(sr, 16000)
+        ests = resample(ests)
+        refs = resample(refs)
+        sr = 16000
+    ests = ests.view(-1, ests.shape[-1])
+    refs = refs.view(-1, refs.shape[-1])
+    outs = []
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        for curinx in range(ests.shape[0]):
+            sf.write("{}/est_{:07d}.wav".format(tmpdirname,curinx),ests[curinx].detach().cpu().numpy(),sr)
+            sf.write("{}/ref_{:07d}.wav".format(tmpdirname,curinx),refs[curinx].detach().cpu().numpy(),sr)
+            out = VISQOLMANAGER.Run( \
+                visqol_lib_py.FilePath("{}/ref_{:07d}.wav".format(tmpdirname,curinx)), \
+                visqol_lib_py.FilePath("{}/est_{:07d}.wav".format(tmpdirname,curinx)))
+            outs.append(out.moslqo)
+    return np.mean(outs)
 
 
 def get_wav_paths(directory):
@@ -17,11 +57,21 @@ def get_wav_paths(directory):
 
 
 if __name__ == '__main__':
-    real_dir = 'ground truth path'  # 替换为你的 ground truth 目录路径
-    gen_dir = 'pred path'           # 替换为你的 prediction 目录路径
+    parser = argparse.ArgumentParser(description="Compute measures.")
+    parser.add_argument(
+        '--test_dir',
+        required=True,
+        help="Reference wave folder."
+    )
+    args = parser.parse_args()
+
+    pred_wav_files = sorted(glob.glob(f"{args.test_dir}/*_pred.wav"))
+    pred_wav_files = [item.split('/')[-1] for item in pred_wav_files]
+    gt_wav_files = [item.replace("_pred.wav", "_ref.wav") for item in pred_wav_files]
     
-    gt_wav_files = get_wav_paths(real_dir)
-    pred_wav_files = get_wav_paths(gen_dir)
+    # pred_wav_files = pred_wav_files[:10]
+    # gt_wav_files = gt_wav_files[:10]
+    
     
     gt_df = pd.DataFrame({'audio_path': gt_wav_files})
     gt_df['caption'] = ''
@@ -30,22 +80,11 @@ if __name__ == '__main__':
     device = 'cuda'
     scores = {}
 
-    # FD KL by VGGish
-    # model = FeatureExtractor(sr=16000, backbone='vggish', device=device,
-    #                          use_pca=False, use_activation=False)
-    # audio_gen_features, _ = model.extract_features(df, base_folder=gen_dir)
-    # audio_real_features, _ = model.extract_features(df_ori, base_folder=real_dir)
-
-    # scores.update(calculate_frechet_distance(audio_real_features,
-    #                                          audio_gen_features,
-    #                                          model_name='vggish'))
-    # print(scores)
-
     # FAD by PANNs
     model = FeatureExtractor(sr=16000, backbone='cnn14', device=device,
                              feature_key='2048')
-    audio_gen_features, _ = model.extract_features(df, base_folder=gen_dir)
-    audio_real_features, _ = model.extract_features(df_ori, base_folder=real_dir)
+    audio_gen_features, _ = model.extract_features(pred_df, base_folder=args.test_dir)
+    audio_real_features, _ = model.extract_features(gt_df, base_folder=args.test_dir)
 
     scores.update(calculate_frechet_distance(audio_real_features,
                                              audio_gen_features,
@@ -54,13 +93,12 @@ if __name__ == '__main__':
     model = FeatureExtractor(sr=16000, backbone='cnn14', device=device, 
                              feature_key='logits')
 
-    print(scores)
-
-    audio_gen_features, _ = model.extract_features(df, base_folder=gen_dir)
-    audio_real_features, _ = model.extract_features(df_ori, base_folder=real_dir)
+    # print(scores)
 
     # previous work use softmax for kl
     # however sigmoid might be more reasonable
+    audio_gen_features, _ = model.extract_features(pred_df, base_folder=args.test_dir)
+    audio_real_features, _ = model.extract_features(gt_df, base_folder=args.test_dir)
     scores.update(calculate_kld(audio_real_features,
                                 audio_gen_features,
                                 model_name='cnn14'))
@@ -69,16 +107,26 @@ if __name__ == '__main__':
                                 rng_seed=2024,
                                 samples_shuffle=True,
                                 splits=10,))
-    print(scores)
+    # print(scores)
 
     model = FeatureExtractor(sr=48000, backbone='clap', device=device, 
                              model_name='laion/larger_clap_general')
-    audio_gen_features, _ = model.extract_features(df, base_folder=gen_dir)
-    clap_score = {'clap_gen': np.mean(audio_gen_features)}
-    scores.update(clap_score)
-    # audio_real_features, _ = model.extract_features(df_ori, base_folder=real_dir)
-    # clap_score = {'clap_real': np.mean(audio_real_features)}
-    # scores.update(clap_score)
+    audio_gen_features, _ = model.extract_features(pred_df, base_folder=args.test_dir)
+    audio_real_features, _ = model.extract_features(gt_df, base_folder=args.test_dir)
+    
+    scores.update(calculate_clap_score(audio_gen_features, audio_real_features))
 
     print(scores)
-    result = pd.DataFrame([scores])
+    
+    input_files = glob.glob(f"{args.test_dir}/*_pred.wav")
+    visqol = []
+    for deg_wav in tqdm(input_files):
+        ref_wav = deg_wav.replace("_pred.wav", "_ref.wav")
+        deg_wav, fs = torchaudio.load(deg_wav)
+        ref_wav, fs = torchaudio.load(ref_wav)
+        cur_visqol = visqol_speech_24k(deg_wav, ref_wav, sr=fs)
+        visqol.append(cur_visqol)
+        
+    scores.update({'visqol': np.mean(visqol)})
+    print(args.test_dir)
+    print(scores)
