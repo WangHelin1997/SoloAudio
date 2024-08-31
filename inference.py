@@ -3,7 +3,7 @@ import os
 from utils import save_audio, get_loss
 from tqdm import tqdm
 import shutil
-
+import numpy as np
 
 def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
     """
