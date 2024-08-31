@@ -153,12 +153,6 @@ class Clap_wrapper():
     @torch.no_grad()
     def extract(self, audio_path, text):
         audio, sr = self.load_wav_resample(audio_path)
-        text_inputs = self.processor(
-            text=[text],
-            max_length=64,
-            padding='max_length',
-            truncation=True,
-            return_tensors="pt")
 
         audio_inputs = self.processor(
             audios=[audio.squeeze().numpy()],
@@ -167,14 +161,10 @@ class Clap_wrapper():
             padding=True)
 
         inputs = {
-            "input_ids": text_inputs["input_ids"],
-            "attention_mask": text_inputs["attention_mask"],
             "input_features": audio_inputs["input_features"]}
         inputs = {key: value.to(self.model.device) for key, value in inputs.items()}
 
-        outputs = self.model(**inputs)
-        cos = outputs.logits_per_audio/self.model.logit_scale_a.exp()
-        a_feature = torch.diag(cos)
+        a_feature = self.model.get_audio_features(**inputs)
 
         return a_feature, None
 
