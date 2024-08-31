@@ -121,13 +121,11 @@ def calculate_clap_score(audio_features, text_features, model_name='default'):
     for i in range(len(audio_features)):
         audio_embedding = audio_features[i]
         text_feature = text_features[i]
-        cosine_sim = torch.nn.functional.cosine_similarity(audio_embedding,
-                                                           text_feature,
+        cosine_sim = torch.nn.functional.cosine_similarity(torch.tensor(audio_embedding).unsqueeze(0),
+                                                           torch.tensor(text_feature).unsqueeze(0),
                                                            dim=1, eps=1e-8)[0]
         score += cosine_sim
         count += 1
 
     score = score / count if count > 0 else 0
-    return {f'clap_{model_name}': score}
-
-
+    return {f'clap_{model_name}': score.numpy()}
