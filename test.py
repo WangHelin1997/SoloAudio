@@ -18,16 +18,16 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
-parser.add_argument('--output_dir', type=str, default='./output-new-dit-cfg-2.0/')
+parser.add_argument('--output_dir', type=str, default='./output-new-udit-cfg-3.0-0.0/')
 parser.add_argument('--test_dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/')
 
 # pre-trained model path
 parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
 parser.add_argument('--segment', type=int, default=3)
 parser.add_argument('--vae_sr', type=int, default=50)
-parser.add_argument('--use_cfg', type=bool, default=True)
 parser.add_argument('--uncond_path', type=str, default='/export/corpora7/HW/SoloAudio/uncond.npz')
-parser.add_argument('--guidance_rescale', type=float, default=2.0)
+parser.add_argument('--guidance_scale', type=float, default=3.0)
+parser.add_argument('--guidance_rescale', type=float, default=0.0)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
@@ -170,7 +170,7 @@ if __name__ == '__main__':
             timbre = clapmodel.get_audio_features(**inputs)
 
 
-        pred = sample_diffusion(args, unet, autoencoder, noise_scheduler, mixture, timbre, args.device, ddim_steps=args.num_infer_steps, eta=0, seed=args.random_seed, uncond_path=args.uncond_path, guidance_scale=args.use_cfg, guidance_rescale=args.guidance_rescale)
+        pred = sample_diffusion(args, unet, autoencoder, noise_scheduler, mixture, timbre, args.device, ddim_steps=args.num_infer_steps, eta=0, seed=args.random_seed, uncond_path=args.uncond_path, guidance_scale=args.guidance_scale, guidance_rescale=args.guidance_rescale)
 
         savename = mix.split('/')[-1].split('.wav')[0]
         shutil.copyfile(mix, f'{args.output_dir}/{savename}_mix.wav')
