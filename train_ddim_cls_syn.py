@@ -36,12 +36,14 @@ parser.add_argument('--test-timbre-dir', type=str, default='/export/corpora7/HW/
 
 parser.add_argument('--sample_rate', type=int, default=24000)
 parser.add_argument('--debug', type=bool, default=False)
-
+parser.add_argument('--use_cfg', type=bool, default=True)
+parser.add_argument('--uncond_path', type=str, default='/export/corpora7/HW/SoloAudio/uncond.npz')
+parser.add_argument('--cfg_ratio', type=float, default=0.1)
 parser.add_argument("--num_infer_steps", type=int, default=50)
 
 # training settings
 parser.add_argument("--amp", type=str, default='fp16')
-parser.add_argument('--epochs', type=int, default=500)
+parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--batch-size', type=int, default=128)
 parser.add_argument('--num-workers', type=int, default=16)
 parser.add_argument('--num-threads', type=int, default=1)
@@ -61,8 +63,8 @@ parser.add_argument('--weight-decay', type=float, default=1e-4)
 # log and random seed
 parser.add_argument('--random-seed', type=int, default=2024)
 parser.add_argument('--log-step', type=int, default=50)
-parser.add_argument('--log-dir', type=str, default='logs_syn/')
-parser.add_argument('--save-dir', type=str, default='ckpt_syn/')
+parser.add_argument('--log-dir', type=str, default='logs_syn_new_udit_cfg/')
+parser.add_argument('--save-dir', type=str, default='ckpt_syn_new_udit_cfg/')
 
 
 args = parser.parse_args()
@@ -76,13 +78,13 @@ args.log_dir = args.log_dir.replace('log', args.diff_config["system"] + '_log')
 args.save_dir = args.save_dir.replace('ckpt', args.diff_config["system"] + '_ckpt')
 
 if os.path.exists(args.log_dir + '/pic/gt') is False:
-    os.makedirs(args.log_dir + '/pic/gt')
+    os.makedirs(args.log_dir + '/pic/gt', exist_ok=True)
 
 if os.path.exists(args.log_dir + '/audio/gt') is False:
-    os.makedirs(args.log_dir + '/audio/gt')
+    os.makedirs(args.log_dir + '/audio/gt', exist_ok=True)
 
 if os.path.exists(args.save_dir) is False:
-    os.makedirs(args.save_dir)
+    os.makedirs(args.save_dir, exist_ok=True)
 
 
 if __name__ == '__main__':
@@ -108,14 +110,20 @@ if __name__ == '__main__':
         vae_dir=args.train_vae_dir, 
         timbre_dir=args.train_timbre_dir,
         tag="audio", 
-        debug=args.debug
+        debug=args.debug,
+        training=args.use_cfg,
+        cfg_ratio=args.cfg_ratio, 
+        uncond_path=args.uncond_path
     )
     train_set2 = TSEDataset(
         base_dir=args.train_base_dir, 
         vae_dir=args.train_vae_dir, 
         timbre_dir=args.train_timbre_dir,
         tag="text1", 
-        debug=args.debug
+        debug=args.debug,
+        training=args.use_cfg,
+        cfg_ratio=args.cfg_ratio, 
+        uncond_path=args.uncond_path
     )
     train_set = ConcatDataset([train_set1, train_set2])
 
@@ -152,7 +160,7 @@ if __name__ == '__main__':
     else:
         print('noise prediction')
         noise_scheduler = DDIMScheduler(**args.diff_config["ddim"]['diffusers'])
-
+        
     optimizer = torch.optim.AdamW(unet.parameters(),
                                   lr=args.learning_rate,
                                   betas=(args.beta1, args.beta2),
@@ -168,9 +176,9 @@ if __name__ == '__main__':
     global_step = 0
     losses = 0
 
-    if accelerator.is_main_process:
-        eval_ddim(unet, autoencoder, noise_scheduler, eval_loader, args, accelerator.device, epoch='test', ddim_steps=args.num_infer_steps, eta=0)
-    accelerator.wait_for_everyone()
+    # if accelerator.is_main_process:
+    #     eval_ddim(unet, autoencoder, noise_scheduler, eval_loader, args, accelerator.device, epoch='test', ddim_steps=args.num_infer_steps, eta=0)
+    # accelerator.wait_for_everyone()
 
     for epoch in range(args.epochs):
         unet.train()
@@ -213,7 +221,7 @@ if __name__ == '__main__':
                     losses = 0.0
 
         if accelerator.is_main_process:
-            eval_ddim(unet, autoencoder, noise_scheduler, eval_loader, args, accelerator.device, epoch=epoch+1, ddim_steps=args.num_infer_steps, eta=0)
+            # eval_ddim(unet, autoencoder, noise_scheduler, eval_loader, args, accelerator.device, epoch=epoch+1, ddim_steps=args.num_infer_steps, eta=0)
 
             if (epoch + 1) % args.save_every == 0:
                 accelerator.wait_for_everyone()
