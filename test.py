@@ -18,21 +18,21 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
-parser.add_argument('--output_dir', type=str, default='./output-new-udit-cfg-3.0-0.0/')
-parser.add_argument('--test_dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/')
+parser.add_argument('--output_dir', type=str, default='./output/')
+parser.add_argument('--test_dir', type=str, default='/YOUR_PATH_TO_TEST/')
 
 # pre-trained model path
-parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
+parser.add_argument('--autoencoder-path', type=str, default='/YOUR_PATH/audio-vae.pt')
 parser.add_argument('--segment', type=int, default=3)
 parser.add_argument('--vae_sr', type=int, default=50)
-parser.add_argument('--uncond_path', type=str, default='/export/corpora7/HW/SoloAudio/uncond.npz')
-parser.add_argument('--guidance_scale', type=float, default=3.0)
+parser.add_argument('--uncond_path', type=str, default='/YOUR_PATH/pretrained_models/uncond.npz')
+parser.add_argument('--guidance_scale', type=float, default=3.0) # 2.5 for audio, 3.0 for text
 parser.add_argument('--guidance_rescale', type=float, default=0.0)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
 parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
-parser.add_argument('--diffusion-ckpt', type=str, default='/export/corpora7/HW/SoloAudio/udit_rotary_v_b_1000_ckpt-new-cfg/99.pt')
+parser.add_argument('--diffusion-ckpt', type=str, default='/YOUR_PATH/pretrained_models/soloaudio_v2.pt') # change to your model path
 
 
 # log and random seed

@@ -23,12 +23,8 @@ def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
 def eval_ddim(unet, autoencoder, scheduler, eval_loader, args, device, epoch=0, 
               uncond_path=None,
               guidance_scale=False, guidance_rescale=0.0,
-              ddim_steps=50, eta=1, 
+              ddim_steps=50, eta=0, 
               random_seed=2024,):
-    # todo: might need to add cfg
-    # add load uncond embedding here
-    # if guidance_scale:
-    #     uncond = torch.load
     
     if random_seed is not None:
         generator = torch.Generator(device=device).manual_seed(random_seed)

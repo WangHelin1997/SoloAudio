@@ -10,7 +10,6 @@ import time
 import torch
 import torchaudio
 from torch.utils.data import DataLoader, ConcatDataset
-# from torch.cuda.amp import autocast, GradScaler
 
 from accelerate import Accelerator
 from diffusers import DDIMScheduler
@@ -24,15 +23,15 @@ from vae_modules.autoencoder_wrapper import Autoencoder
 parser = argparse.ArgumentParser()
 
 # data loading settings
-parser.add_argument('--train-base-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-train/wav24000/train')
-parser.add_argument('--train-vae-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-train-vae/wav24000/train')
-parser.add_argument('--train-timbre-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-train-clap/wav24000/train')
-parser.add_argument('--val-base-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-val/wav24000/val')
-parser.add_argument('--val-vae-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-val-vae/wav24000/val')
-parser.add_argument('--val-timbre-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-val-clap/wav24000/val')
-parser.add_argument('--test-base-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test')
-parser.add_argument('--test-vae-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test-vae/wav24000/test')
-parser.add_argument('--test-timbre-dir', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test-clap/wav24000/test')
+parser.add_argument('--train-base-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-train/wav24000/train')
+parser.add_argument('--train-vae-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-train-vae/wav24000/train')
+parser.add_argument('--train-timbre-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-train-clap/wav24000/train')
+parser.add_argument('--val-base-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-val/wav24000/val')
+parser.add_argument('--val-vae-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-val-vae/wav24000/val')
+parser.add_argument('--val-timbre-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-val-clap/wav24000/val')
+parser.add_argument('--test-base-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-test/wav24000/test')
+parser.add_argument('--test-vae-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-test-vae/wav24000/test')
+parser.add_argument('--test-timbre-dir', type=str, default='/YOUR_PATH/TSEDataMix/fsd-test-clap/wav24000/test')
 
 parser.add_argument('--sample_rate', type=int, default=24000)
 parser.add_argument('--debug', type=bool, default=False)
@@ -41,7 +40,7 @@ parser.add_argument("--num_infer_steps", type=int, default=50)
 
 # training settings
 parser.add_argument("--amp", type=str, default='fp16')
-parser.add_argument('--epochs', type=int, default=500)
+parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--batch-size', type=int, default=128)
 parser.add_argument('--num-workers', type=int, default=16)
 parser.add_argument('--num-threads', type=int, default=1)
@@ -50,7 +49,7 @@ parser.add_argument("--adam-epsilon", type=float, default=1e-08)
 
 # model configs
 parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
-parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
+parser.add_argument('--autoencoder-path', type=str, default='/YOUR_PATH/audio-vae/100k.pt')
 
 # optimization
 parser.add_argument('--learning-rate', type=float, default=1e-4)
@@ -74,9 +73,6 @@ with open(args.diffusion_config, 'r') as fp:
 args.v_prediction = args.diff_config["ddim"]["v_prediction"]
 args.log_dir = args.log_dir.replace('log', args.diff_config["system"] + '_log')
 args.save_dir = args.save_dir.replace('ckpt', args.diff_config["system"] + '_ckpt')
-
-if os.path.exists(args.log_dir + '/pic/gt') is False:
-    os.makedirs(args.log_dir + '/pic/gt')
 
 if os.path.exists(args.log_dir + '/audio/gt') is False:
     os.makedirs(args.log_dir + '/audio/gt')
@@ -175,8 +171,6 @@ if __name__ == '__main__':
                                   )
     loss_func = torch.nn.MSELoss()
 
-    # scaler = GradScaler()
-    # put to accelerator
     unet, autoencoder, optimizer, train_loader = accelerator.prepare(unet, autoencoder, optimizer, train_loader)
 
     global_step = 0

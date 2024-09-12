@@ -6,7 +6,7 @@ from metric_funcs import calculate_frechet_distance, calculate_kld, calculate_cl
 import argparse
 import glob
 import sys
-sys.path.append('/export/corpora7/HW/visqol/visqol_lib_py')
+sys.path.append('/YOUR_PATH/visqol/visqol_lib_py')
 import visqol_lib_py
 import visqol_config_pb2
 import similarity_result_pb2
@@ -21,7 +21,7 @@ import soundfile as sf
 
 VISQOLMANAGER = visqol_lib_py.VisqolManager()
 VISQOLMANAGER.Init(visqol_lib_py.FilePath( \
-    '/export/corpora7/HW/visqol/model/lattice_tcditugenmeetpackhref_ls2_nl60_lr12_bs2048_learn.005_ep2400_train1_7_raw.tflite'), \
+    '/YOUR_PATH/visqol/model/lattice_tcditugenmeetpackhref_ls2_nl60_lr12_bs2048_learn.005_ep2400_train1_7_raw.tflite'), \
     True, False, 60, True)
 
 
@@ -68,10 +68,7 @@ if __name__ == '__main__':
     pred_wav_files = sorted(glob.glob(f"{args.test_dir}/*_pred.wav"))
     pred_wav_files = [item.split('/')[-1] for item in pred_wav_files]
     gt_wav_files = [item.replace("_pred.wav", "_ref.wav") for item in pred_wav_files]
-    
-    # pred_wav_files = pred_wav_files[:10]
-    # gt_wav_files = gt_wav_files[:10]
-    
+
     
     gt_df = pd.DataFrame({'audio_path': gt_wav_files})
     gt_df['caption'] = ''
@@ -116,7 +113,7 @@ if __name__ == '__main__':
     
     scores.update(calculate_clap_score(audio_gen_features, audio_real_features))
 
-    print(scores)
+    # print(scores)
     
     input_files = glob.glob(f"{args.test_dir}/*_pred.wav")
     visqol = []

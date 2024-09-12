@@ -16,9 +16,8 @@ import torchaudio
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
 parser.add_argument('--output_dir', type=str, default='./output/')
-parser.add_argument('--mixture', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/mix_dir/1.wav')
-parser.add_argument('--reference', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/s1/1.wav')
-parser.add_argument('--enrollment', type=str, default='/export/corpora7/HW/TSEDataMix/fsd-test/wav24000/test/ref/1.wav')
+parser.add_argument('--mixture', type=str, default='./demo/1_mix.wav')
+parser.add_argument('--enrollment', type=str, default='./demo/1_enrollment.wav')
 
 # pre-trained model path
 parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
@@ -134,7 +133,6 @@ if __name__ == '__main__':
     savename = args.mixture.split('/')[-1].split('.wav')[0]
     shutil.copyfile(args.mixture, f'{args.output_dir}/{savename}_mix.wav')
     shutil.copyfile(args.enrollment, f'{args.output_dir}/{savename}_enrollment.wav')
-    shutil.copyfile(args.reference, f'{args.output_dir}/{savename}_ref.wav')
     save_audio(f'{args.output_dir}/{savename}_pred.wav', 24000, pred)
 
     print(f'the prediction is save to {savename}_pred.wav')
