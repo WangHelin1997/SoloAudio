@@ -49,7 +49,7 @@ parser.add_argument("--adam-epsilon", type=float, default=1e-08)
 
 # model configs
 parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
-parser.add_argument('--autoencoder-path', type=str, default='/YOUR_PATH/audio-vae/100k.pt')
+parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
 
 # optimization
 parser.add_argument('--learning-rate', type=float, default=1e-4)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
             if accelerator.is_main_process:
                 if global_step % args.log_step == 0:
-                    n = open(args.log_dir + 'ddim_cls_log.txt', mode='a')
+                    n = open(args.log_dir + 'log.txt', mode='a')
                     n.write(time.asctime(time.localtime(time.time())))
                     n.write('\n')
                     n.write('Epoch: [{}][{}]    Batch: [{}][{}]    Loss: {:.6f}\n'.format(

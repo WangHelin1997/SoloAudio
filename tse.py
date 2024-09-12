@@ -20,7 +20,7 @@ parser.add_argument('--mixture', type=str, default='./demo/1_mix.wav')
 parser.add_argument('--enrollment', type=str, default='./demo/1_enrollment.wav')
 
 # pre-trained model path
-parser.add_argument('--autoencoder-path', type=str, default='/export/corpora7/HW/audio-vae/100k.pt')
+parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
 parser.add_argument('--segment', type=int, default=3)
 parser.add_argument('--vae_sr', type=int, default=50)
 
