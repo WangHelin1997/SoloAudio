@@ -1,4 +1,4 @@
-name: sep
+name: soloaudio
 channels:
   - conda-forge
   - defaults

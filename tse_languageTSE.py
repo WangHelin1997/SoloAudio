@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
 parser.add_argument('--output_dir', type=str, default='./output-languageTSE/')
 parser.add_argument('--mixture', type=str, default='./demo/1_mix.wav')
-parser.add_argument('--enrollment', type=str, default='')
+parser.add_argument('--enrollment', type=str, default='Acoustic guitar')
 
 # pre-trained model path
 parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
@@ -96,40 +96,28 @@ if __name__ == '__main__':
         mixture, _ = librosa.load(args.mixture, sr=24000)
         mixture = torch.tensor(mixture).unsqueeze(0).to(args.device)
         mixture = autoencoder(audio=mixture.unsqueeze(1))
-        
-        audio_sample, sample_rate = torchaudio.load(args.enrollment)
-        if audio_sample.shape[0] > 1:
-            audio_sample = torch.mean(audio_sample, dim=0, keepdim=True)
-        if sample_rate != 48000:
-            audio_sample = audio_sample
-            resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=48000)
-            audio_sample = resampler(audio_sample)
-        num_samples = audio_sample.shape[1]
-        target_num_samples = 48000*10
-        if num_samples > target_num_samples:
-            audio_sample = audio_sample[:, :target_num_samples]
-        elif num_samples < target_num_samples:
-            padding = target_num_samples - num_samples
-            audio_sample = torch.nn.functional.pad(audio_sample, (0, padding))
-            
-        audio_inputs = processor(
-            audios=[audio_sample.squeeze().numpy()],
-            sampling_rate=48000,
-            return_tensors="pt",
-            padding=True  # Pad audio to the required length, if necessary
+
+        text = args.enrollment
+
+        text_inputs = processor(
+            text=[text],
+            max_length=10,  # Fixed length for text
+            padding='max_length',  # Pad text to max length
+            truncation=True,  # Truncate text if it's longer than max length
+            return_tensors="pt"
         )
         inputs = {
-            "input_features": audio_inputs["input_features"][0].unsqueeze(0)  # Audio features
+            "input_ids": text_inputs["input_ids"][0].unsqueeze(0),  # Text input IDs
+            "attention_mask": text_inputs["attention_mask"][0].unsqueeze(0),  # Attention mask for text
         }
         inputs = {key: value.to(args.device) for key, value in inputs.items()}
-        timbre = clapmodel.get_audio_features(**inputs)
+        timbre = clapmodel.get_text_features(**inputs)
 
     
     pred = sample_diffusion(args, unet, autoencoder, noise_scheduler, mixture, timbre, args.device, ddim_steps=args.num_infer_steps, eta=0, seed=args.random_seed)
     
     savename = args.mixture.split('/')[-1].split('.wav')[0]
     shutil.copyfile(args.mixture, f'{args.output_dir}/{savename}_mix.wav')
-    shutil.copyfile(args.enrollment, f'{args.output_dir}/{savename}_enrollment.wav')
     save_audio(f'{args.output_dir}/{savename}_pred.wav', 24000, pred)
 
     print(f'the prediction is save to {savename}_pred.wav')
