@@ -48,7 +48,7 @@ parser.add_argument('--save-every', type=int, default=5)
 parser.add_argument("--adam-epsilon", type=float, default=1e-08)
 
 # model configs
-parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
+parser.add_argument('--diffusion-config', type=str, default='./config/SoloAudio.yaml')
 parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
 
 # optimization

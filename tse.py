@@ -26,8 +26,8 @@ parser.add_argument('--vae_sr', type=int, default=50)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
-parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
-parser.add_argument('--diffusion-ckpt', type=str, default='/export/corpora7/HW/SoloAudio/udit_rotary_v_b_1000_ckpt/84.pt')
+parser.add_argument('--diffusion-config', type=str, default='./config/SoloAudio.yaml')
+parser.add_argument('--diffusion-ckpt', type=str, default='./pretrained_models/soloaudio_v2.pt')
 
 # log and random seed
 parser.add_argument('--random-seed', type=int, default=2024)

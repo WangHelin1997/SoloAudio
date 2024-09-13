@@ -31,7 +31,7 @@ parser.add_argument('--guidance_rescale', type=float, default=0.0)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
-parser.add_argument('--diffusion-config', type=str, default='config/DiffTSE_udit_rotary_v_b_1000.yaml')
+parser.add_argument('--diffusion-config', type=str, default='./config/SoloAudio.yaml')
 parser.add_argument('--diffusion-ckpt', type=str, default='/YOUR_PATH/pretrained_models/soloaudio_v2.pt') # change to your model path
 
 
