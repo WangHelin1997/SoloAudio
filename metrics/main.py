@@ -6,7 +6,7 @@ from metric_funcs import calculate_frechet_distance, calculate_kld, calculate_cl
 import argparse
 import glob
 import sys
-sys.path.append('/YOUR_PATH/visqol/visqol_lib_py')
+sys.path.append('../pretrained_models/visqol/visqol_lib_py')
 import visqol_lib_py
 import visqol_config_pb2
 import similarity_result_pb2
@@ -21,7 +21,7 @@ import soundfile as sf
 
 VISQOLMANAGER = visqol_lib_py.VisqolManager()
 VISQOLMANAGER.Init(visqol_lib_py.FilePath( \
-    '/YOUR_PATH/visqol/model/lattice_tcditugenmeetpackhref_ls2_nl60_lr12_bs2048_learn.005_ep2400_train1_7_raw.tflite'), \
+    '../pretrained_models/visqol/model/lattice_tcditugenmeetpackhref_ls2_nl60_lr12_bs2048_learn.005_ep2400_train1_7_raw.tflite'), \
     True, False, 60, True)
 
 
