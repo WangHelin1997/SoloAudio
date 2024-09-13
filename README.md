@@ -156,6 +156,9 @@ cd metircs/
 python main.py
 ```
 
+## License
+The codebase is under CC BY-NC-SA 4.0 ([LICENSE-CODE](./LICENSE-CODE)), and the model weights are under Coqui Public Model License 1.0.0 ([LICENSE-MODEL](./LICENSE-MODEL)). 
+
 
 
 ## Citations
