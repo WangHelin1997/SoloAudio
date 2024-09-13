@@ -14,25 +14,25 @@ from vae_modules.autoencoder_wrapper import Autoencoder
 import torchaudio
 import glob
 import numpy as np
-
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
-parser.add_argument('--output_dir', type=str, default='./output/')
+parser.add_argument('--output_dir', type=str, default='./test-languageTSE/')
 parser.add_argument('--test_dir', type=str, default='/YOUR_PATH_TO_TEST/')
-
+parser.add_argument('--meta_dir', type=str, default='/YOUR_PATH_TO_TEST/fsd_mix_test.csv')
 # pre-trained model path
-parser.add_argument('--autoencoder-path', type=str, default='/YOUR_PATH/audio-vae.pt')
+parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
 parser.add_argument('--segment', type=int, default=3)
 parser.add_argument('--vae_sr', type=int, default=50)
-parser.add_argument('--uncond_path', type=str, default='/YOUR_PATH/pretrained_models/uncond.npz')
+parser.add_argument('--uncond_path', type=str, default='./pretrained_models/uncond.npz')
 parser.add_argument('--guidance_scale', type=float, default=3.0) # 2.5 for audio, 3.0 for text
 parser.add_argument('--guidance_rescale', type=float, default=0.0)
 
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
 parser.add_argument('--diffusion-config', type=str, default='./config/SoloAudio.yaml')
-parser.add_argument('--diffusion-ckpt', type=str, default='/YOUR_PATH/pretrained_models/soloaudio_v2.pt') # change to your model path
+parser.add_argument('--diffusion_ckpt', type=str, default='./pretrained_models/soloaudio_v2.pt')
 
 
 # log and random seed
@@ -134,46 +134,40 @@ if __name__ == '__main__':
     mixtures = glob.glob(os.path.join(args.test_dir, "mix_dir", "*.wav"))
     print(len(mixtures))
     references = [item.replace("mix_dir", "s1") for item in mixtures]
-    enrollments = [item.replace("mix_dir", "ref") for item in mixtures]
+    
+    df = pd.read_csv(args.meta_dir)
+    filenames = list(df['output_filename'])
+    texts = list(df['s1_text'])
+    meta_data = {}
+    for i in range(len(filenames)):
+        meta_data[filenames[i].split('/')[-1]] = texts[i].replace('_', ' ').lower()
         
-    for mix, ref, enroll in tqdm(zip(mixtures, references, enrollments)):
+    for mix, ref in tqdm(zip(mixtures, references)):
         with torch.no_grad():
             mixture, _ = librosa.load(mix, sr=24000)
             mixture = torch.tensor(mixture).unsqueeze(0).to(args.device)
             mixture = autoencoder(audio=mixture.unsqueeze(1))
+            
+            text = meta_data[mix.split('/')[-1]]
 
-            audio_sample, sample_rate = torchaudio.load(enroll)
-            if audio_sample.shape[0] > 1:
-                audio_sample = torch.mean(audio_sample, dim=0, keepdim=True)
-            if sample_rate != 48000:
-                audio_sample = audio_sample
-                resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=48000)
-                audio_sample = resampler(audio_sample)
-            num_samples = audio_sample.shape[1]
-            target_num_samples = 48000*10
-            if num_samples > target_num_samples:
-                audio_sample = audio_sample[:, :target_num_samples]
-            elif num_samples < target_num_samples:
-                padding = target_num_samples - num_samples
-                audio_sample = torch.nn.functional.pad(audio_sample, (0, padding))
-
-            audio_inputs = processor(
-                audios=[audio_sample.squeeze().numpy()],
-                sampling_rate=48000,
-                return_tensors="pt",
-                padding=True  # Pad audio to the required length, if necessary
+            text_inputs = processor(
+                text=[text],
+                max_length=10,  # Fixed length for text
+                padding='max_length',  # Pad text to max length
+                truncation=True,  # Truncate text if it's longer than max length
+                return_tensors="pt"
             )
             inputs = {
-                "input_features": audio_inputs["input_features"][0].unsqueeze(0)  # Audio features
+                "input_ids": text_inputs["input_ids"][0].unsqueeze(0),  # Text input IDs
+                "attention_mask": text_inputs["attention_mask"][0].unsqueeze(0),  # Attention mask for text
             }
             inputs = {key: value.to(args.device) for key, value in inputs.items()}
-            timbre = clapmodel.get_audio_features(**inputs)
+            timbre = clapmodel.get_text_features(**inputs)
 
 
         pred = sample_diffusion(args, unet, autoencoder, noise_scheduler, mixture, timbre, args.device, ddim_steps=args.num_infer_steps, eta=0, seed=args.random_seed, uncond_path=args.uncond_path, guidance_scale=args.guidance_scale, guidance_rescale=args.guidance_rescale)
 
         savename = mix.split('/')[-1].split('.wav')[0]
         shutil.copyfile(mix, f'{args.output_dir}/{savename}_mix.wav')
-        shutil.copyfile(enroll, f'{args.output_dir}/{savename}_enrollment.wav')
         shutil.copyfile(ref, f'{args.output_dir}/{savename}_ref.wav')
         save_audio(f'{args.output_dir}/{savename}_pred.wav', 24000, pred)

@@ -15,7 +15,7 @@ import torchaudio
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
-parser.add_argument('--output_dir', type=str, default='./output/')
+parser.add_argument('--output_dir', type=str, default='./output-audioTSE/')
 parser.add_argument('--mixture', type=str, default='./demo/1_mix.wav')
 parser.add_argument('--enrollment', type=str, default='./demo/1_enrollment.wav')
 
