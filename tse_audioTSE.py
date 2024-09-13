@@ -21,9 +21,6 @@ parser.add_argument('--enrollment', type=str, default='./demo/1_enrollment.wav')
 
 # pre-trained model path
 parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
-parser.add_argument('--segment', type=int, default=3)
-parser.add_argument('--vae_sr', type=int, default=50)
-
 parser.add_argument("--num_infer_steps", type=int, default=50)
 # model configs
 parser.add_argument('--diffusion-config', type=str, default='./config/SoloAudio.yaml')

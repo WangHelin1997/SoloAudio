@@ -23,8 +23,6 @@ parser.add_argument('--test_dir', type=str, default='/YOUR_PATH_TO_TEST/')
 parser.add_argument('--meta_dir', type=str, default='/YOUR_PATH_TO_TEST/fsd_mix_test.csv')
 # pre-trained model path
 parser.add_argument('--autoencoder-path', type=str, default='./pretrained_models/audio-vae.pt')
-parser.add_argument('--segment', type=int, default=3)
-parser.add_argument('--vae_sr', type=int, default=50)
 parser.add_argument('--uncond_path', type=str, default='./pretrained_models/uncond.npz')
 parser.add_argument('--guidance_scale', type=float, default=3.0) # 2.5 for audio, 3.0 for text
 parser.add_argument('--guidance_rescale', type=float, default=0.0)
