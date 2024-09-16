@@ -3,7 +3,7 @@
 </p>
 
 
-[![Paper](https://img.shields.io/badge/arXiv-24xx.xxxxx-brightgreen.svg?style=flat-square)](https://arxiv.org/)  [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/) [![Models](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-blue)](https://huggingface.co/westbrook/SoloAudio)  [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/)  [![Demo page](https://img.shields.io/badge/Audio_Samples-blue?logo=Github&style=flat-square)](https://wanghelin1997.github.io/SoloAudio-Demo/)
+[![Paper](https://img.shields.io/badge/arXiv-2409.08425-brightgreen.svg?style=flat-square)](https://arxiv.org/pdf/2409.08425)  [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/) [![Models](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-blue)](https://huggingface.co/westbrook/SoloAudio)  [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/)  [![Demo page](https://img.shields.io/badge/Audio_Samples-blue?logo=Github&style=flat-square)](https://wanghelin1997.github.io/SoloAudio-Demo/)
 
 Official Pytorch implementation of the paper: SoloAudio: Target Sound Extraction with Language-oriented Audio Diffusion Transformer.
 
