@@ -68,13 +68,13 @@ It is ready to use on [default url](http://127.0.0.1:7860).
 For audio-oriented TSE, please run:
 
 ```bash
-python test_audioTSE.py --output_dir './output-audioTSE/' --mixture './demo/1_mix.wav' --enrollment './demo/1_enrollment.wav'
+python tse_audioTSE.py --output_dir './output-audioTSE/' --mixture './demo/1_mix.wav' --enrollment './demo/1_enrollment.wav'
 ```
 
 For language-oriented TSE, please run:
 
 ```bash
-python test_languageTSE.py --output_dir './output-languageTSE/' --mixture './demo/1_mix.wav' --enrollment 'Acoustic guitar'
+python tse_languageTSE.py --output_dir './output-languageTSE/' --mixture './demo/1_mix.wav' --enrollment 'Acoustic guitar'
 ```
 
 
