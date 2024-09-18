@@ -12,6 +12,7 @@ Official Pytorch implementation of the paper: SoloAudio: Target Sound Extraction
 - [x] Release model weights
 - [ ] Release data
 - [ ] HuggingFace Spaces demo
+- [ ] VAE training code
 - [x] arxiv paper
 
 
