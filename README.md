@@ -10,7 +10,7 @@ Official Pytorch implementation of the paper: SoloAudio: Target Sound Extraction
 
 ## TODO
 - [x] Release model weights
-- [ ] Release data
+- [x] Release data
 - [ ] HuggingFace Spaces demo
 - [ ] VAE training code
 - [x] arxiv paper
@@ -86,6 +86,8 @@ cd data_preparating/
 python create_filenames.py
 python create_fsdmix.py
 ```
+
+You can also use our simulated data for [training](https://huggingface.co/westbrook/SoloAudio/blob/main/fsd-train-new.zip), [validataion](https://huggingface.co/westbrook/SoloAudio/blob/main/fsd-val.zip) and [test](https://huggingface.co/westbrook/SoloAudio/blob/main/fsd-test.zip).
 
 2. Prepare the TangoSyn DataSet, please run:
 ```bash
