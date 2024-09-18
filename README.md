@@ -124,20 +124,6 @@ python train.py
 accelerate launch train.py
 ```
 
-## Training
-
-Now, you are good to start training!
-
-1. Train with a single GPU, please run:
-```bash
-python train.py
-```
-
-2. Train with multiple GPUs, please run:
-```bash
-accelerate launch train.py
-```
-
 ## Test
 To test a folder of audio files, please run:
 
