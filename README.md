@@ -149,11 +149,13 @@ python main.py
 
 We provide codes to train an audio waveform VAE model, reference to [stable-audio-tools](https://github.com/Stability-AI/stable-audio-tools).
 
-1. Change data path in `stable_audio_vae/configs/vae_data.txt` (any folder contains audio files)
+1. Change data path in `stable_audio_vae/configs/vae_data.txt` (any folder contains audio files).
 
-2. change model config in `stable_audio_vae/configs/vae_16k_mono_v2.config`
+2. Change model config in `stable_audio_vae/configs/vae_16k_mono_v2.config`. 
 
-3. Change batch size and training settings in `stable_audio_vae/defaults.ini`
+We provide config for training audio files of 16k sampling rate,  please change the settings when you want other sampling rates.
+
+3. Change batch size and training settings in `stable_audio_vae/defaults.ini`.
 
 4. Run:
 
