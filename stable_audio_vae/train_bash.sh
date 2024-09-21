@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=1 python train.py --dataset-config 'configs/vae_data.txt' --model-config 'configs/model_configs/vae_16k_mono_v2.config' --name 'vae_16k_v2'
