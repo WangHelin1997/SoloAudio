@@ -3,7 +3,7 @@
     "datasets": [
         {
             "id": "vae_audio",
-            "path": "/data3/jhai/Projects/AudioEncoder/data/train_data_24k",
+            "path": "/data/audioset",
             "custom_metadata_module": "configs/dataset_configs/custom_metadata/custom_md_example.py"
         }
     ],

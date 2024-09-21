@@ -12,7 +12,7 @@ Official Pytorch implementation of the paper: SoloAudio: Target Sound Extraction
 - [x] Release model weights
 - [x] Release data
 - [ ] HuggingFace Spaces demo
-- [ ] VAE training code
+- [x] VAE training code
 - [x] arxiv paper
 
 
@@ -144,6 +144,24 @@ To calculate the metrics used in the paper, please run:
 cd metircs/
 python main.py
 ```
+
+## VAE Training
+
+We provide codes to train an audio waveform VAE model, reference to [stable-audio-tools](https://github.com/Stability-AI/stable-audio-tools).
+
+1. Change data path in `stable_audio_vae/configs/vae_data.txt` (any folder contains audio files)
+
+2. change model config in `stable_audio_vae/configs/vae_16k_mono_v2.config`
+
+3. Change batch size and training settings in `stable_audio_vae/defaults.ini`
+
+4. Run:
+
+```bash
+cd stable_audio_vae/
+bash train_bash.sh
+```
+
 
 ## License
 The codebase is under [MIT LICENSE](./LICENSE). 
