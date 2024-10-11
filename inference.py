@@ -31,6 +31,8 @@ def eval_ddim(unet, autoencoder, scheduler, eval_loader, args, device, epoch=0,
     else:
         generator = torch.Generator(device=device)
         generator.seed()
+
+    scheduler.set_timesteps(ddim_steps)
         
     unet.eval()
 
