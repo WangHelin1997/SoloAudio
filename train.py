@@ -110,25 +110,25 @@ if __name__ == '__main__':
         base_dir=args.train_base_dir, 
         vae_dir=args.train_vae_dir, 
         timbre_dir=args.train_timbre_dir,
-        tag="text1", 
+        tag="text", 
         debug=args.debug
     )
-    train_set3 = TSEDataset(
-        base_dir=args.train_base_dir, 
-        vae_dir=args.train_vae_dir, 
-        timbre_dir=args.train_timbre_dir,
-        tag="text2", 
-        debug=args.debug
-    )
-    train_set4 = TSEDataset(
-        base_dir=args.train_base_dir, 
-        vae_dir=args.train_vae_dir, 
-        timbre_dir=args.train_timbre_dir,
-        tag="text3", 
-        debug=args.debug
-    )
-    train_set = ConcatDataset([train_set1, train_set2, train_set3, train_set4])
-
+    # train_set3 = TSEDataset(
+    #     base_dir=args.train_base_dir, 
+    #     vae_dir=args.train_vae_dir, 
+    #     timbre_dir=args.train_timbre_dir,
+    #     tag="text2", 
+    #     debug=args.debug
+    # )
+    # train_set4 = TSEDataset(
+    #     base_dir=args.train_base_dir, 
+    #     vae_dir=args.train_vae_dir, 
+    #     timbre_dir=args.train_timbre_dir,
+    #     tag="text3", 
+    #     debug=args.debug
+    # )
+    # train_set = ConcatDataset([train_set1, train_set2, train_set3, train_set4])
+    train_set = ConcatDataset([train_set1, train_set2])
     train_loader = DataLoader(train_set, num_workers=args.num_workers, batch_size=args.batch_size, shuffle=True, pin_memory=True, persistent_workers=True)
 
     # use this load for check generated audio samples
