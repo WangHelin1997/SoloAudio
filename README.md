@@ -9,6 +9,8 @@ Official Pytorch implementation of the ICASSP 2025 paper: SoloAudio: Target Soun
 
 Try our Huggingface space!!!
 
+[Video](https://github.com/user-attachments/assets/878c5ddd-5b3c-4010-ae7b-0431deeeddc3)
+
 ## TODO
 - [x] Release model weights
 - [x] Release data
