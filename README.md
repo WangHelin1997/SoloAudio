@@ -21,7 +21,7 @@ Try our Huggingface space!!!
 
 ## Environment setup
 ```bash
-conda env create -f env.yml
+conda env create -f environment.yml
 conda activate soloaudio
 ```
 
